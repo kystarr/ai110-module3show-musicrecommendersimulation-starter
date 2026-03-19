@@ -29,6 +29,53 @@ Some prompts to answer:
 
 You can include a simple diagram or bullet list if helpful.
 
+
+Real-world recommendations work by combining collaborative filtering with content-based filtering. Collaborative filtering means that the system finds users with similar tastes, and content-based filtering means that features of similar songs (bpm, mood, etc.) are matched. My system will focus on content-based filtering which means it will score songs based on the preferences of a user.
+
+The features that the Song object will use are: genre, mood, energy, tempo_bpm, and acousticness.
+
+The features the UserProfile object will include and store are favorite_genre, favorite_mood, target_energy, and likes_acoustic.
+
+### Scoring Plan
+
+The Recommender scores every song in the catalog using a 100-point system:
+
+| Feature | Points | Logic |
+|---|---|---|
+| Genre match | +40 | Exact match on genre string |
+| Mood match | +30 | Exact match on mood string |
+| Energy similarity | 0–30 | `round((1 - abs(song.energy - target_energy)) * 30)` |
+
+**Why these weights?** Genre is the strongest signal — a user who wants lofi won't enjoy metal even if the mood matches. Mood is the next most important signal because it reflects emotional state. Energy uses a sliding scale so songs that are close to the target still earn partial credit rather than scoring zero.
+
+Every song receives a score between 0 and 100. The system sorts all songs from highest to lowest and returns the top K results.
+
+### Data Flow Diagram
+
+```mermaid
+flowchart TD
+    A([User Preferences\nfavorite_genre, favorite_mood, target_energy]) --> B[Load songs.csv\n20 Song objects]
+    B --> C[Start Loop: For each song in catalog]
+
+    C --> D{Genre match?}
+    D -- Yes --> E[+40 points]
+    D -- No --> F[+0 points]
+
+    E --> G{Mood match?}
+    F --> G
+
+    G -- Yes --> H[+30 points]
+    G -- No --> I[+0 points]
+
+    H --> J[Energy Score\n1 - abs song.energy - target_energy × 30]
+    I --> J
+
+    J --> K[Total Score = genre + mood + energy\nmax 100 pts]
+    K --> C
+
+    C -- All songs scored --> L[Sort all songs\nhighest to lowest score]
+    L --> M([Output: Top K Recommendations])
+```
 ---
 
 ## Getting Started
@@ -187,6 +234,9 @@ Examples:
 
 You do not need a numeric metric, but if you used one, explain what it measures.
 
+
+Here is a picture that shows the results for a user with a pop/happy profile:
+![alt text](image.png)
 ---
 
 ## 8. Future Work
