@@ -4,14 +4,7 @@
 
 In this project you will build and explain a small music recommender system.
 
-Your goal is to:
-
-- Represent songs and a user "taste profile" as data
-- Design a scoring rule that turns that data into recommendations
-- Evaluate what your system gets right and wrong
-- Reflect on how this mirrors real world AI recommenders
-
-Replace this paragraph with your own summary of what your version does.
+This project is a content-based music recommender simulation built in Python. It scores every song in a 20-song catalog against a user's stated preferences — favorite genre, preferred mood, and target energy level — and returns the top 5 matches with scores and plain-language explanations. The system includes two scoring paths: a dictionary-based recommender used by the command-line runner, and an object-oriented Recommender class used by the test suite. It also supports building a user profile automatically by averaging the features of songs a user has already liked.
 
 ---
 
@@ -29,6 +22,8 @@ Some prompts to answer:
 
 You can include a simple diagram or bullet list if helpful.
 
+Mermaid Diagram:
+![alt text](image-11.png)
 
 Real-world recommendations work by combining collaborative filtering with content-based filtering. Collaborative filtering means that the system finds users with similar tastes, and content-based filtering means that features of similar songs (bpm, mood, etc.) are matched. My system will focus on content-based filtering which means it will score songs based on the preferences of a user.
 
@@ -123,6 +118,12 @@ Use this section to document the experiments you ran. For example:
 
 ---
 
+- Ran three standard profiles (High-Energy Pop, Chill Lofi, Deep Intense Rock) to confirm baseline scoring worked as expected and that well-matched profiles returned intuitive results
+- Tested how the system behaved for edge-case user types: a user whose favorite genre doesn't exist in the catalog (k-pop), a user whose preferred mood doesn't exist (devastated), a high-energy sad user, and a user with no preferences at all — these revealed that missing genre or mood silently collapses scoring to energy only
+- Ran the Energy Phantom test: two identical profiles with energy=0.01 and energy=0.99 to check whether changing the energy weight had any real effect on rankings — it did not, because the /10 divisor in the formula compresses all energy scores into a 0.90–1.00 range
+- Temporarily removed the mood check from all three scoring functions to test what the rankings looked like without it — only one profile changed its #1 result, showing that genre weight so heavily dominates the score that mood rarely changes the outcome
+- Observed that the Genre Tyrant profile (metal/calm/low energy) ranked Iron Cathedral #1 despite Glass Sonata matching mood and energy far better, which showed that reducing the genre weight would be a meaningful improvement worth trying next
+
 ## Limitations and Risks
 
 Summarize some limitations of your recommender.
@@ -137,6 +138,15 @@ You will go deeper on this in your model card.
 
 ---
 
+
+- Only works on a 20-song catalog — too small to provide real variety
+- Genre match dominates scoring, so mood and energy preferences can be overridden
+- A bug in the energy formula makes energy preference nearly meaningless in the dict-based scorer
+- Does not consider lyrics, tempo, artist, or listening history
+- Users whose favorite genre or mood isn't in the catalog get silently worse results
+- The likes_acoustic preference is collected but never used in scoring
+- No diversity — the same 5 songs will always appear for the same profile
+
 ## Reflection
 
 Read and complete `model_card.md`:
@@ -150,6 +160,11 @@ Write 1 to 2 paragraphs here about what you learned:
 
 
 ---
+
+Building this recommender showed me that turning data into predictions is really just a series of design decisions dressed up as math. Every choice — which features to include, how many points to award a genre match versus a mood match, whether to divide by 10 or by 1 — directly shapes what gets recommended and to whom. The system doesn't have any real understanding of music; it just adds up numbers according to rules I wrote, which means any mistake or bias in those rules gets silently passed along to every recommendation the system makes.
+
+The bias analysis was the most eye-opening part. I expected unfairness to look obvious, but most of it was invisible until I ran adversarial test cases. A quiet user and a loud user received nearly identical results because of a single division by 10. A user who wanted calm music got an intense metal song recommended because genre happened to match. Users of rare genres like jazz or classical were structurally penalized just because the catalog didn't have enough songs to represent them fairly. That made me realize that bias in AI systems often isn't intentional — it's a side effect of small decisions that compound, and you only find it by deliberately trying to break the system.
+
 
 ## 7. `model_card_template.md`
 
@@ -235,10 +250,6 @@ Examples:
 You do not need a numeric metric, but if you used one, explain what it measures.
 
 
-Here is a picture that shows the results for a user with a pop/happy profile:
-![alt text](image.png)
----
-
 ## 8. Future Work
 
 If you had more time, how would you improve this recommender
@@ -258,4 +269,27 @@ A few sentences about what you learned:
 - What surprised you about how your system behaved
 - How did building this change how you think about real music recommenders
 - Where do you think human judgment still matters, even if the model seems "smart"
+
+
+
+The biggest learning moment was discovering that a single division by 10 in the energy formula made an entire preference signal nearly meaningless — and the system still looked like it was working until I ran tests designed to break it. AI tools helped me surface biases I wouldn't have thought to look for, like the acousticness preference being collected but never used, though I still had to read the actual code myself to verify the findings were real. What surprised me most was how "right" the recommendations felt for standard profiles, which made it easy to miss how badly the system failed for edge cases — simple algorithms can seem intelligent in the situations they were built for and quietly fail everywhere else. If I extended this project I would fix the energy formula, add acousticness as a real scoring signal, and add a diversity rule so the same genre can't dominate all five results.
+
+
+
+
+Here is a picture that shows the results for a user with a pop/happy profile:
+![alt text](image.png)
+---
+
+Here are the reccommendations for each profile:
+![alt text](image-1.png)
+![alt text](image-2.png)
+![alt text](image-3.png)
+![alt text](image-4.png)
+![alt text](image-5.png)
+![alt text](image-6.png)
+![alt text](image-7.png)
+![alt text](image-8.png)
+![alt text](image-9.png)
+![alt text](image-10.png)
 
